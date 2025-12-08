@@ -30,6 +30,8 @@ export const createUrl = async (req: Request, res: Response) => {
             longUrl,
             title,
             expiresAt,
+            // Add creator if user is logged in
+            creatorId: req.user?.userId || undefined,
         });
 
         await newUrl.save();
@@ -42,7 +44,13 @@ export const createUrl = async (req: Request, res: Response) => {
 
 export const getUrls = async (req: Request, res: Response) => {
     try {
-        const urls = await Url.find().sort({ createdAt: -1 });
+        // Only return URLs created by the authenticated user
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const urls = await Url.find({ creatorId: userId }).sort({ createdAt: -1 });
         res.json(urls);
     } catch (error) {
         console.error(error);
@@ -53,10 +61,22 @@ export const getUrls = async (req: Request, res: Response) => {
 export const getUrl = async (req: Request, res: Response) => {
     try {
         const { slug } = req.params;
+        const userId = req.user?.userId;
+        
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
         const url = await Url.findOne({ slug });
         if (!url) {
             return res.status(404).json({ error: 'URL not found' });
         }
+
+        // Check if the user owns this URL
+        if (!url.creatorId || url.creatorId.toString() !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to access this URL' });
+        }
+
         res.json(url);
     } catch (error) {
         console.error(error);
@@ -68,10 +88,20 @@ export const updateUrl = async (req: Request, res: Response) => {
     try {
         const { slug } = req.params;
         const { disabled, expiresAt } = req.body;
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
 
         const url = await Url.findOne({ slug });
         if (!url) {
             return res.status(404).json({ error: 'URL not found' });
+        }
+
+        // Check if the user owns this URL
+        if (!url.creatorId || url.creatorId.toString() !== userId) {
+            return res.status(403).json({ error: 'You do not have permission to update this URL' });
         }
 
         if (disabled !== undefined) url.disabled = disabled;

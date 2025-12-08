@@ -3,3 +3,9 @@ package-lock.json
 /node_modules
 *.patch
 *.diff
+.env
+
+# Test files
+test_server.log
+test_cookies.txt
+server.log
