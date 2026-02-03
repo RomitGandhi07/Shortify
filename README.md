@@ -1,4 +1,4 @@
-# Shortify (URL Shortner)
+# Shortify
 URL Shortener with Analytics & User Authentication
 
 A powerful URL shortening service built with Node.js, Express, TypeScript, and MongoDB. Features user authentication, analytics tracking, and comprehensive API endpoints.
